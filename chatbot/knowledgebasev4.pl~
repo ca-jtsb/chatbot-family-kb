@@ -1,0 +1,334 @@
+:- dynamic male/1.
+:- dynamic female/1.
+:- dynamic parent/2.
+:- dynamic mother/2.
+:- dynamic father/2.
+:- dynamic child/2.
+:- dynamic son/2.
+:- dynamic daughter/2.
+:- dynamic sibling/2.
+:- dynamic brother/2.
+:- dynamic sister/2.
+:- dynamic genderless_uncle_aunt/2.
+:- dynamic aunt/2.
+:- dynamic uncle/2.
+:- dynamic grandparent/2.
+:- dynamic grandmother/2.
+:- dynamic grandfather/2.
+:- dynamic relative/2.
+:- dynamic ancestor/2.
+
+% populating the knowledge base with relationships
+male(andrew).
+male(richard).
+male(james).
+male(david).
+male(charles).
+male(stone).
+male(mica).
+male(mikoto).
+male(don). % unconnected from the rest
+
+female(nancy).
+female(laila).
+female(carol).
+female(leah).
+female(ruby).
+female(topaz).
+female(susan).
+female(jett). % unconnected from the rest
+
+parent(andrew,james).
+parent(nancy,james).
+parent(nancy,david).
+parent(nancy,carol).
+parent(richard,david).
+parent(richard,carol).
+parent(laila,leah).
+parent(laila,charles).
+parent(james,leah).
+parent(james,charles).
+parent(david,ruby).
+parent(david,topaz).
+parent(david,stone).
+parent(david,mica).
+parent(carol,susan).
+parent(susan,mikoto).
+parent(jett,don).
+
+
+% rules for the relationships
+
+father(X,Y) :-
+    male(X),
+    parent(X,Y),
+    X \= Y.
+
+mother(X,Y) :-
+    female(X),
+    parent(X,Y),
+    X \= Y.
+
+child(X,Y) :-
+    parent(Y,X).
+
+son(X,Y) :-
+    male(X),
+    child(X,Y).
+
+daughter(X,Y):-
+    female(X),
+    child(X,Y).
+
+sibling(X,Y):-
+    parent(Parent,X),
+    parent(Parent,Y),
+    X \== Y.
+
+sister(X,Y) :-
+    sibling(X,Y),
+    female(X).
+
+brother(X,Y) :-
+    male(X),
+    sibling(X,Y).
+
+genderless_uncle_aunt(X,Y) :-
+    parent(Parent, Y),
+    sibling(X,Parent).
+
+uncle(X, Y) :-
+    male(X),
+    genderless_uncle_aunt(X,Y).
+
+aunt(X, Y) :-
+    female(X),
+    genderless_uncle_aunt(X,Y).
+
+cousin(X, Y) :-
+    grandparent(G, X),
+    grandparent(G, Y),
+    \+ sibling(X, Y),
+    X \= Y.
+
+cousin(X, Y) :-
+    parent(P1, X),
+    parent(P2, Y),
+    sibling(P1, P2),
+    not(sibling(X,Y)),
+    P1 \= P2,
+    X \= Y.
+
+grandparent(X, Y):-
+    parent(X, Z),
+    parent(Z, Y),
+    X \= Y.
+
+grandmother(X, Y):-
+    grandparent(X,Y),
+    female(X).
+
+grandfather(X,Y):-
+    grandparent(X,Y),
+    male(X).
+
+% extra rules for inference
+
+spouse(X,Y) :-
+    parent(X,Child),
+    parent(Y,Child),
+    X \= Y.
+
+parent_in_law(X,Y) :-
+    spouse(Y,Z),  % if Y is married to a person Z
+    parent(X,Z).   % and X is a parent of that person Z, X is Ys parent_in_law
+
+% ancestor rules
+ancestor(X,Y) :-
+    parent(X,Y).
+
+ancestor(X,Y) :-
+    parent(X,Z),
+    ancestor(Z,Y).
+
+ancestor(X,Y) :-
+    genderless_uncle_aunt(X,Y).
+
+ancestor(X,Y) :-
+    genderless_uncle_aunt(X,Z),
+    ancestor(Z,Y).
+
+ancestor(X,Y) :-
+    parent_in_law(X,Y).
+
+ancestor(X,Y) :-
+    parent_in_law(X,Z), % recognizes parents of spouses as ancestors
+    ancestor(Z,Y).
+
+ancestor(X,Y) :-
+    sibling(Y,Z), % for half-siblings. recognizes the parent of the current
+    parent(X,Z).  % sibling as an ancestor of the newly added half-sibling.
+
+
+% a child can at most have only 2 parents
+has_two_parents(X) :-
+    parent(P1, X),
+    parent(P2, X),
+    P1 \= P2.
+
+% a child can at most have only 4 grandparents, 2 from each side
+has_four_grandparents(X) :-
+    findall(G, grandparent(G, X),Gs),
+    list_to_set(Gs, UniqueGs),
+    length(UniqueGs, Count),
+    Count = 4.
+
+
+relative(X,Y) :-
+    (
+      (   parent(X,Y);
+          parent(Y,X);
+          child(X,Y);
+          child(Y,X);
+          grandparent(X,Y);
+          grandparent(Y,X);
+          sibling(X,Y);
+          sibling(Y,X);
+          genderless_uncle_aunt(X,Y);
+          genderless_uncle_aunt(Y,X);
+          cousin(X,Y);
+          cousin(Y,X);
+          ancestor(X,Y);
+          ancestor(Y,X)	),
+	X \= Y	).
+
+relative(X, Y) :-
+    ancestor(X, Z),    % Z is a descendant of X
+    ancestor(Y, Z),    % Z is also a descendant of Y
+    X \= Y.            % X and Y are different individuals who share the same descendant
+
+
+relative(X, Y) :-
+    ancestor(Z, X),    % Z is an ancestor of X
+    ancestor(Z, Y),    % Z is also an ancestor of Y
+    X \= Y.            % X and Y are different individuals
+
+relative(X,Y) :-
+   (
+    spouse(X,Y);
+    spouse(Y,X)
+   ),
+    X \= Y.
+
+
+relative(X,Y) :-
+   (
+    parent_in_law(X,Y);
+    parent_in_law(Y,X)
+   ),
+    X \= Y.
+
+
+% RULES TO CHECK BEFORE ASSERTING
+%
+check_parent(X,Y) :-
+    not(ancestor(Y,X)),
+    not(parent(Y,X)),
+    not(sibling(X,Y)),
+    not(relative(X,Y)),
+    not(has_two_parents(Y)),
+    X \= Y.
+
+% checks if X has a child who has the sibling Y
+% (who doesnt have two parents yet)
+check_parent(X,Y) :-
+    sibling(Z,Y),
+    parent(X,Z),
+    not(ancestor(Y,X)),
+    not(has_two_parents(X)),
+    X \= Y.
+
+check_father(X,Y) :-
+    parent(X,Y);
+    check_parent(X,Y),
+    not(female(X)).
+
+check_mother(X,Y) :-
+    parent(X,Y);
+    check_parent(X,Y),
+    not(male(X)).
+
+check_child(X,Y) :-
+    check_parent(Y,X),
+    X \= Y.
+
+% checks if child has a sibling who has that parent to bypass relative
+% rule in the previous check_child
+check_child(X,Y) :-
+    sibling(Z,X),
+    parent(Y,Z),
+    not(ancestor(X,Y)),
+    not(has_two_parents(X)),
+    X \= Y.
+
+check_son(X,Y) :-
+    child(X,Y);
+    check_child(X,Y),
+    not(female(X)).
+
+check_daughter(X,Y) :-
+    child(X,Y);
+    check_child(X,Y),
+    not(male(X)).
+
+check_sibling(X,Y) :-
+    not(relative(X,Y)),
+    X \= Y.
+
+check_sister(X,Y) :-
+    sibling(X,Y);
+    check_sibling(X,Y),
+    not(male(X)).
+
+check_brother(X,Y) :-
+    sibling(X,Y);
+    check_sibling(X,Y),
+    not(female(X)).
+
+check_genderless_uncle_aunt(X,Y) :-
+    not(relative(X,Y)),
+    not(ancestor(Y,X)),
+    X \= Y.
+
+check_aunt(X,Y) :-
+    genderless_uncle_aunt(X,Y);
+    check_genderless_uncle_aunt(X,Y),
+    not(male(X)).
+
+check_uncle(X,Y) :-
+    genderless_uncle_aunt(X,Y);
+    check_genderless_uncle_aunt(X,Y),
+    not(female(X)).
+
+check_grandparent(X,Y) :-
+    grandparent(X,Y);
+    not(ancestor(Y,X)),
+    not(parent(X,Y)),
+    not(relative(X,Y)),
+    not(has_four_grandparents(Y)),
+    X \= Y.
+
+check_grandmother(X,Y) :-
+    check_grandparent(X,Y),
+    not(male(X)).
+
+check_grandfather(X,Y) :-
+    check_grandparent(X,Y),
+    not(female(X)).
+
+
+
+
+
+
+

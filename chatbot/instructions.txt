@@ -1,0 +1,49 @@
+HOW TO USE THE CHATBOT
+
+1. You will be greeted by a welcome message from the bot.
+2. You may ask or tell the bot any questions or statements you have regarding the family tree currently encoded in the knowledge base. A picture of the family tree (Family_Tree.png) encoded in the database is included in this ZIP file for your reference. Otherwise, you may enter new information and relationships involving new characters.
+
+3. Acceptable sentence formats:
+   note: "___" is to be filled with the unique name of a person e.g. Bob
+
+STATEMENTS:
+"____ and ____ are siblings."			<- This is restricted to 2 names only
+"____ and ____ are the parents of ____."
+"____, ____ and ____ are children of _____." 	<- This can handle >=2 children names
+"____ is the mother of ____."
+"____ is the father of ____."
+"____ is a child of ____."
+"____ is a daughter of ____."
+"____ is a son of ____."
+"____ is a sister of ____."
+"____ is a brother of ____."
+"____ is an aunt of ____."
+"____ is an uncle of ____."
+"____ is a grandmother of ____."
+"____ is a grandfather of ____."
+
+QUESTIONS:
+"Are ____ and ____ siblings?"
+"Are ____ and ____ relatives?"
+"Are ____ and ____ the parents of ____?"
+"Are ____, ____ and ____ children of ____?"
+"Is ____ the mother of ____?"
+"Is ____ the father of ____?"
+"Is ____ a child of ____?"
+"Is ____ a daughter of ____?"
+"Is ____ a son of ____?"
+"Is ____ an aunt of ____?"
+"Is ____ an uncle of ____?"
+"Is ____ a sister of ____?"
+"Is ____ a brother of ____?"
+"Is ____ a grandfather of ____?"
+"Is ____ a grandmother of ____?"
+"Who are the siblings of ____?"
+"Who are the sisters of ____?"
+"Who are the brothers of ____?"
+"Who is the mother of ____?"
+"Who is the father of ____?"
+"Who are the parents of ____?"
+"Who are the sons of ____?"
+"Who are the daughters of ____?"
+"Who are the children of ____?"
